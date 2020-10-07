@@ -16,42 +16,42 @@ namespace Accountant_Form
     public partial class MainForm : Form
     {
         #region Properties
-        public List<Thread> threadList { get; set; }
-        public YearlyBalance yearlyBal { get; set; }
-        public bool firstRun { get; set; }
+        public List<Thread> ThreadList { get; set; }
+        public YearlyBalance AnualBalance { get; set; }
+        public bool FirstRun { get; set; }
         #endregion
 
         public MainForm()
         {
             InitializeComponent();
-            this.threadList = new List<Thread>();
-            this.yearlyBal = new YearlyBalance();
+            ThreadList = new List<Thread>();
+            AnualBalance = new YearlyBalance();
         }
 
         #region Buttons
  
         private void btnNewBalances_Click(object sender, EventArgs e)
         {
-            NewMonthForm addMonthForm = new NewMonthForm(this.yearlyBal);
+            NewMonthForm addMonthForm = new NewMonthForm(AnualBalance);
             addMonthForm.ShowDialog();
             listBox1.DataSource = new List<Balance>();
-            listBox1.DataSource = yearlyBal.Balances;
+            listBox1.DataSource = AnualBalance.Balances;
         }
 
         private void btnSavings_Click(object sender, EventArgs e)
         {
-            SavingsForm savingsForm = new SavingsForm(yearlyBal.Savings);
+            SavingsForm savingsForm = new SavingsForm(AnualBalance.Savings);
             savingsForm.ShowDialog();
             SetSavings();
         }
 
         private void btnResetYear_Click(object sender, EventArgs e)
         {
-            if (!this.firstRun)
+            if (!this.FirstRun)
             {
                 if (MessageBox.Show("WARNING! Creating a new year balance will erase the actual one.\nBut will create automatically a PDF file for you.", "Are You Sure?", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    this.yearlyBal = new YearlyBalance();
+                    this.AnualBalance = new YearlyBalance();
                     ClearYear();
                     CreateYear();             
                 }
@@ -59,13 +59,13 @@ namespace Accountant_Form
             else
             {
                 CreateYear();
-                this.firstRun = false;
+                this.FirstRun = false;
             }
         }
 
         private void btnYearsDetails_Click(object sender, EventArgs e)
         {
-            DetailsForm detailsForm = new DetailsForm(this.yearlyBal,Constants.Anual);
+            DetailsForm detailsForm = new DetailsForm(this.AnualBalance,Constants.Anual);
             detailsForm.ShowDialog();
         }
 
@@ -103,47 +103,49 @@ namespace Accountant_Form
         /// </summary>
         private void KillThreads()
         {
-            foreach (Thread _thr in threadList)
+            foreach (Thread _thr in ThreadList)
             {
                 if (_thr.IsAlive)
                     _thr.Abort();
             }
         }
 
-        /// <summary>
-        /// Sets all the information related to the yearly balance section.
-        /// </summary>
-        private void YearlyInformation()
+        private void UpdateInformation()
         {
-
-            lblYearly_year.Text = yearlyBal.Year.ToString();
-            lblYearly_income.Text = "$ " + yearlyBal.TotalSaved.ToString();
-            lblYearly_spent.Text = "$ " + yearlyBal.TotalSpent.ToString();
-            yearly_result.ForeColor = (yearlyBal.Positive) ? Color.Green : Color.Red;
-            yearly_result.Text = "$ " + String.Format("{0:0.00}", yearlyBal.Result);
+            AnualBalance.Update();
+            UpdateMonthSelectedInformation();
+            UpdateAnualBalanceInformation();
         }
 
         /// <summary>
-        /// Sets all the information related to the month balance section every time a new month on the listBox is selected.
+        /// Sets all the information related to the yearly balance section.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="args"></param>
-        private void MonthSelectedInformation(object sender, EventArgs args)
+        private void UpdateAnualBalanceInformation()
         {
-            this.btnMonthDetails.Enabled = (this.listBox1.SelectedItem != null) ? true : false;
-            this.contextMenuStrip1.Enabled = (this.listBox1.SelectedItem != null) ? true : false;
-            Balance item = (Balance)this.listBox1.SelectedItem;
+            lblYearly_year.Text = AnualBalance.Year.ToString();
+            lblYearly_income.Text = "$ " + AnualBalance.TotalSaved.ToString();
+            lblYearly_spent.Text = "$ " + AnualBalance.TotalSpent.ToString();
+            yearly_result.ForeColor = AnualBalance.Positive ? Color.Green : Color.Red;
+            yearly_result.Text = "$ " + String.Format("{0:0.00}", AnualBalance.Result);
+        }
+
+        private void UpdateMonthSelectedInformation()
+        {
+            btnMonthDetails.Enabled = listBox1.SelectedItem != null;
+            contextMenuStrip1.Enabled = listBox1.SelectedItem != null;
+            Balance item = (Balance)listBox1.SelectedItem;
+
             try
             {
-                foreach (Balance _bal in yearlyBal.Balances)
+                foreach (Balance _bal in AnualBalance.Balances)
                 {
                     if (_bal.Month == item.Month)
                     {
                         lblMonth_name.Text = _bal.Month.ToString();
                         lblMonth_Income.Text = "$ " + _bal.TotalIncomes.ToString();
                         lblMonth_spendings.Text = "$ " + _bal.TotalSpendings.ToString();
-                        lblMonth_Result.ForeColor = (_bal.Result >= 0)?Color.Green:Color.Red;
-                        lblMonth_Result.Text = "$ "+String.Format("{0:0.00}", _bal.Result);
+                        lblMonth_Result.ForeColor = (_bal.Result >= 0) ? Color.Green : Color.Red;
+                        lblMonth_Result.Text = "$ " + String.Format("{0:0.00}", _bal.Result);
                     }
                 }
             }
@@ -153,15 +155,25 @@ namespace Accountant_Form
             }
         }
 
+        /// <summary>
+        /// Sets all the information related to the month balance section every time a new month on the listBox is selected.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private void MonthSelectedInformationEvent(object sender, EventArgs args)
+        {
+            UpdateMonthSelectedInformation();
+        }
+
         private void SetSavings()
         {
-            if(yearlyBal.Savings == null)
+            if(AnualBalance.Savings == null)
             {
-                yearlyBal.Savings = new Saving();
+                AnualBalance.Savings = new Saving();
             }
 
-            dolarSavings.Text = "$ " + String.Format("{0:0.00}", yearlyBal.Savings.UsdSaving);
-            pesosSavings.Text = "$ " + String.Format("{0:0.00}", yearlyBal.Savings.PesoSaving);
+            dolarSavings.Text = "$ " + String.Format("{0:0.00}", AnualBalance.Savings.UsdSaving);
+            pesosSavings.Text = "$ " + String.Format("{0:0.00}", AnualBalance.Savings.PesoSaving);
 
         }
 
@@ -170,11 +182,11 @@ namespace Accountant_Form
         /// </summary>
         private void IndexFormSetUp()
         {
-            this.listBox1.SelectedIndexChanged += MonthSelectedInformation;
-            this.btnNewBalances.Enabled = false;
-            this.btnMonthDetails.Enabled = false;
-            this.btnYearsDetails.Enabled = false;
-            this.firstRun = true;
+            listBox1.SelectedIndexChanged += MonthSelectedInformationEvent;
+            btnNewBalances.Enabled = false;
+            btnMonthDetails.Enabled = false;
+            btnYearsDetails.Enabled = false;
+            FirstRun = true;
         }
 
         /// <summary>
@@ -182,12 +194,12 @@ namespace Accountant_Form
         /// </summary>
         private void CreateYear()
         {
-            CreateYearForm createYearForm = new CreateYearForm(this.yearlyBal);
+            CreateYearForm createYearForm = new CreateYearForm(AnualBalance);
             createYearForm.ShowDialog();
-            this.btnNewBalances.Enabled = true;
-            this.listBox1.Enabled = true;
-            this.btnYearsDetails.Enabled = true;
-            YearlyInformation();
+            btnNewBalances.Enabled = true;
+            listBox1.Enabled = true;
+            btnYearsDetails.Enabled = true;
+            UpdateAnualBalanceInformation();
         }
 
         /// <summary>
@@ -204,8 +216,7 @@ namespace Accountant_Form
             lblMonth_spendings.ResetText();
             lblMonth_Result.ResetText();
 
-            this.listBox1.DataSource = null;
-
+            listBox1.DataSource = null;
         }
 
         #endregion
@@ -213,37 +224,38 @@ namespace Accountant_Form
         #region Load and Close
         private void MainForm_Load(object sender, EventArgs e)
         {
-            this.IndexFormSetUp();
+            IndexFormSetUp();
+
             try
             {
                 if (Xml<YearlyBalance>.ReadBinary("accountantDB.bin", out YearlyBalance _data))
                 {
-                    this.btnNewBalances.Enabled = true;
-                    this.listBox1.Enabled = true;
-                    this.btnYearsDetails.Enabled = true;
-                    this.firstRun = false;
+                    btnNewBalances.Enabled = true;
+                    listBox1.Enabled = true;
+                    btnYearsDetails.Enabled = true;
+                    FirstRun = false;
 
-                    yearlyBal = _data;
-                    listBox1.DataSource = yearlyBal.Balances;
+                    AnualBalance = _data;
+                    listBox1.DataSource = AnualBalance.Balances;
                     SetSavings();
-                    YearlyInformation();
+                    UpdateAnualBalanceInformation();
                 }
             }
             catch (Exception)
             {
-                MessageBox.Show("An Error ocurred while loading balance list.");
+                MessageBox.Show("Error al cargar accountantDB.bin");
             }
 
             Thread threadTime = new Thread(SetTime);
             threadTime.Start();
-            threadList.Add(threadTime);
+            ThreadList.Add(threadTime);
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             try
             {
-                Xml<YearlyBalance>.SaveBinaryXml("accountantDB.bin", this.yearlyBal);
+                Xml<YearlyBalance>.SaveBinaryXml("accountantDB.bin", AnualBalance);
             }
             catch (Exception)
             {
@@ -258,69 +270,61 @@ namespace Accountant_Form
         #region Menu lateral
         private void agregarIngresoToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (this.listBox1.SelectedItem != null)
+            if (listBox1.SelectedItem != null)
             {
-                AddEntryForm addIncome = new AddEntryForm((Balance)this.listBox1.SelectedItem,Constants.Income);
+                AddEntryForm addIncome = new AddEntryForm((Balance)listBox1.SelectedItem, Constants.Income);
                 addIncome.ShowDialog();
 
-                yearlyBal.Update();
-                MonthSelectedInformation(null, null);
-                YearlyInformation();
+                UpdateInformation();
             }
         }
 
         private void agregarEgresoToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (this.listBox1.SelectedItem != null)
+            if (listBox1.SelectedItem != null)
             {
-                AddEntryForm addSpForm = new AddEntryForm((Balance)this.listBox1.SelectedItem,Constants.Spending);
+                AddEntryForm addSpForm = new AddEntryForm((Balance)listBox1.SelectedItem,Constants.Spending);
                 addSpForm.ShowDialog();
 
-                yearlyBal.Update();
-                MonthSelectedInformation(null, null);
-                YearlyInformation();
+                UpdateInformation();
             }
         }
 
         private void modificarEgresosToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (this.listBox1.SelectedItem != null)
+            if (listBox1.SelectedItem != null)
             {
-                Balance monthBalance = (Balance)this.listBox1.SelectedItem;
+                Balance monthBalance = (Balance)listBox1.SelectedItem;
                 UpdateBalance update = new UpdateBalance(monthBalance.Spendings, monthBalance.Month);
                 update.ShowDialog();
 
-                yearlyBal.Update();
-                MonthSelectedInformation(null, null);
-                YearlyInformation();
+                UpdateInformation();
             }
         }
 
         private void modificarIngresosToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (this.listBox1.SelectedItem != null)
+            if (listBox1.SelectedItem != null)
             {
-                Balance monthBalance = (Balance)this.listBox1.SelectedItem;
+                Balance monthBalance = (Balance)listBox1.SelectedItem;
                 UpdateBalance update = new UpdateBalance(monthBalance.Incomes, monthBalance.Month);
                 update.ShowDialog();
 
-                yearlyBal.Update();
-                MonthSelectedInformation(null, null);
-                YearlyInformation();
+                UpdateInformation();
             }
         }
 
         private void eliminarMesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (this.listBox1.SelectedItem != null)
+            if (listBox1.SelectedItem != null)
             {
-                Balance item = (Balance)this.listBox1.SelectedItem;
-                if (MessageBox.Show($"Seguro que desea eliminar el mes de {item.Month.ToString()}", "Eliminar Balance Mensual", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                Balance item = (Balance)listBox1.SelectedItem;
+                if (MessageBox.Show($"Seguro que desea eliminar el mes de {item.Month}", "Eliminar Balance Mensual", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    this.yearlyBal -= item.Month;
+                    AnualBalance -= item.Month;
                     listBox1.DataSource = new List<Balance>();
-                    listBox1.DataSource = yearlyBal.Balances;
-                    YearlyInformation();
+                    listBox1.DataSource = AnualBalance.Balances;
+                    UpdateAnualBalanceInformation();
                     MessageBox.Show("Listo!");
                 }
             }
@@ -331,5 +335,7 @@ namespace Accountant_Form
         {
 
         }
+
+       
     }
 }
