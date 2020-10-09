@@ -80,7 +80,7 @@
     <Compile Include="Enumerables\EIncome.cs" />
     <Compile Include="Enumerables\EMonth.cs" />
     <Compile Include="Enumerables\ESpending.cs" />
-    <Compile Include="Helpers\CategoryCalculator.cs" />
+    <Compile Include="Helpers\Calculator.cs" />
     <Compile Include="Helpers\PdfHelper.cs" />
     <Compile Include="Income.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

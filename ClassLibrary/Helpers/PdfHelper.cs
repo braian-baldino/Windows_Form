@@ -14,6 +14,9 @@ using iText.Layout.Borders;
 using System.Dynamic;
 using System.Collections.Generic;
 using System;
+using System.Drawing.Imaging;
+using System.Drawing;
+using iText.Kernel.Pdf.Colorspace;
 
 namespace ClassLibrary.Helpers
 {
@@ -34,23 +37,23 @@ namespace ClassLibrary.Helpers
                                     .SetFont(HelveticaBold);
 
         private static Style Title = new Style()
-                                    .SetFontSize(12)
+                                    .SetFontSize(14)
                                     .SetFont(HelveticaBold);
 
         private static Style SubTitle = new Style()
-                                    .SetFontSize(10)
+                                    .SetFontSize(12)
                                     .SetFont(HelveticaBold);
 
         private static Style NormalText = new Style()
-                                    .SetFontSize(9)
+                                    .SetFontSize(10)
                                     .SetFont(HelveticaRegular);
 
         private static Style NormalTextBold = new Style()
-                                    .SetFontSize(9)
+                                    .SetFontSize(10)
                                     .SetFont(HelveticaBold);
 
         private static Style NegativeNormalText = new Style()
-                                    .SetFontSize(9)
+                                    .SetFontSize(10)
                                     .SetFontColor(ColorConstants.RED)
                                     .SetFont(HelveticaRegular);
 
@@ -77,7 +80,7 @@ namespace ClassLibrary.Helpers
 
         private static void CreateTablePerMonthBalance(List<Balance> balances)
         {
-            Table table = new Table(4);
+            Table table = new Table(4).UseAllAvailableWidth();
             table.AddCell(new Cell().Add(new Paragraph("Mes").AddStyle(SubTitle)));
             table.AddCell(new Cell().Add(new Paragraph("Ingreso").AddStyle(SubTitle)));
             table.AddCell(new Cell().Add(new Paragraph("Egreso").AddStyle(SubTitle)));
