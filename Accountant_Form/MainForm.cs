@@ -1,4 +1,5 @@
 ﻿using ClassLibrary;
+using ClassLibrary.Helpers;
 using ClassLibrary.Serializer;
 using System;
 using System.Collections.Generic;
@@ -65,8 +66,8 @@ namespace Accountant_Form
 
         private void btnYearsDetails_Click(object sender, EventArgs e)
         {
-            DetailsForm detailsForm = new DetailsForm(this.AnualBalance,Constants.Anual);
-            detailsForm.ShowDialog();
+            var fileName = $"Balance_Anual_{AnualBalance.Year}.pdf";
+            PdfHelper.CreatePdf(fileName,AnualBalance);
         }
 
         private void btnMonthDetails_Click(object sender, EventArgs e)
@@ -269,7 +270,7 @@ namespace Accountant_Form
 
         #region Menu lateral
         private void agregarIngresoToolStripMenuItem_Click(object sender, EventArgs e)
-        {
+        {          
             if (listBox1.SelectedItem != null)
             {
                 AddEntryForm addIncome = new AddEntryForm((Balance)listBox1.SelectedItem, Constants.Income);
