@@ -14,9 +14,11 @@ namespace ClassLibrary.Helpers
 {
     public static class PdfHelper
     {
+        #region Properties
         private static PdfWriter Writer { get; set; }
         private static Document Document { get; set; }
         private static MemoryStream MemStream { get; set; }
+        #endregion
 
         #region Fonts & Styles
         //Fonts
@@ -56,14 +58,33 @@ namespace ClassLibrary.Helpers
 
         #endregion
 
+        #region Ctor
         static PdfHelper()
         {
             MemStream = new MemoryStream();
             Writer = new PdfWriter(MemStream);
             Document = new Document(new PdfDocument(Writer),PageSize.A4);    
         }
+        #endregion
 
-        private static Cell CellHandler(string text, Style style, int cellRow = 1, int cellCol = 1)
+        public static void CreateAnualPdf(string fileName, YearlyBalance yearBalance)
+        {
+            SetDocumentInfo(yearBalance);
+
+            byte[] bytesStream = MemStream.ToArray();
+            MemStream = new MemoryStream();
+            MemStream.Write(bytesStream, 0, bytesStream.Length);
+            MemStream.Position = 0;
+
+            using (FileStream file = new FileStream(fileName, FileMode.Create, FileAccess.Write))
+            {
+                MemStream.CopyTo(file);
+                Process.Start(fileName);
+            }
+        }
+
+        #region Private Methods
+        public static Cell CellHandler(string text, Style style, int cellRow = 1, int cellCol = 1)
         {
             return new Cell(cellRow, cellCol).Add(new Paragraph(text).AddStyle(style));
         }
@@ -85,63 +106,51 @@ namespace ClassLibrary.Helpers
 
             Document.Close();
         }
-
-        private static void CreateAnualDetailsTable(YearlyBalance anualBalance)
-        {
-            Table table = new Table(2).UseAllAvailableWidth();
-            //table.AddCell(new Cell(2,2).Add(new Paragraph("Detalle Anual").AddStyle(CellHeader)));
-            table.AddCell(CellHandler("Detalle Anual",CellHeader,2,2));
-            table.AddCell(CellHandler("Ingresos Totales",NormalText));
-            table.AddCell(new Cell().Add(new Paragraph($"${Calculator.FormatValue(anualBalance.TotalSaved)}").AddStyle(NormalText)));
-            table.AddCell(new Cell().Add(new Paragraph("Gastos Totales").AddStyle(NormalText)));
-            table.AddCell(new Cell().Add(new Paragraph($"${Calculator.FormatValue(anualBalance.TotalSpent)}").AddStyle(NormalText)));
-            table.AddCell(new Cell().Add(new Paragraph("Promedio de Ingreso por mes").AddStyle(NormalText)));
-            table.AddCell(new Cell().Add(new Paragraph($"${Calculator.FormatValue(Calculator.AverageIncomesPerMonth(anualBalance))}").AddStyle(NormalText)));
-            table.AddCell(new Cell().Add(new Paragraph("Promeio de Gastos por mes").AddStyle(NormalText)));
-            table.AddCell(new Cell().Add(new Paragraph($"${Calculator.FormatValue(Calculator.AverageSpendingsPerMonth(anualBalance))}").AddStyle(NormalText)));
-            table.AddCell(new Cell().Add(new Paragraph("Balance Final").AddStyle(NormalText)));
-            table.AddCell(new Cell().Add(new Paragraph($"${Calculator.FormatValue(anualBalance.Result)}").AddStyle(NormalText)));
-
-            Document.Add(table);
-        }
      
         private static void CreateTablePerMonthBalance(List<Balance> balances)
         {                     
             Table table = new Table(4).UseAllAvailableWidth();
-            table.AddCell(new Cell(4,4).Add(new Paragraph("Resumen Anual por mes").AddStyle(CellHeader)));
-            table.AddCell(new Cell().Add(new Paragraph("Mes").AddStyle(SubTitle)));
-            table.AddCell(new Cell().Add(new Paragraph("Ingreso").AddStyle(SubTitle)));
-            table.AddCell(new Cell().Add(new Paragraph("Egreso").AddStyle(SubTitle)));
-            table.AddCell(new Cell().Add(new Paragraph("Balance").AddStyle(SubTitle)));
+            table.AddCell(CellHandler("Resumen Anual Por Mes", CellHeader, 4, 4));
+            table.AddCell(CellHandler("Mes",SubTitle));
+            table.AddCell(CellHandler("Ingreso", SubTitle));
+            table.AddCell(CellHandler("Egreso", SubTitle));
+            table.AddCell(CellHandler("Balance", SubTitle));
 
             foreach (var month in balances)
             {
                 var resultParagraph = new Paragraph($"${month.Result}");
 
-                table.AddCell(new Paragraph($"{month.Month}").SetBold().AddStyle(NormalText));
-                table.AddCell(new Paragraph($"${month.TotalIncomes}").AddStyle(NormalText));
-                table.AddCell(new Paragraph($"${month.TotalSpendings}").AddStyle(NormalText));
+                table.AddCell(CellHandler($"{month.Month}",NormalText));
+                table.AddCell(CellHandler($"${month.TotalIncomes}",NormalText));
+                table.AddCell(CellHandler($"${month.TotalSpendings}",NormalText));
                 table.AddCell((month.Result >= 0) ? resultParagraph.AddStyle(NormalText) : resultParagraph.AddStyle(NegativeNormalText));
             }
 
             Document.Add(table);
         }
 
-        public static void CreateAnualPdf(string fileName, YearlyBalance yearBalance)
+        private static void CreateAnualDetailsTable(YearlyBalance anualBalance)
         {
-            SetDocumentInfo(yearBalance);
+            Table table = new Table(2).UseAllAvailableWidth();
+            table.AddCell(CellHandler("Detalle Anual", CellHeader, 2, 2));
 
-            byte[] bytesStream = MemStream.ToArray();
-            MemStream = new MemoryStream();
-            MemStream.Write(bytesStream, 0, bytesStream.Length);
-            MemStream.Position = 0;
+            table.AddCell(CellHandler("Ingresos Totales", NormalText));
+            table.AddCell(CellHandler($"${Calculator.FormatValue(anualBalance.TotalSaved)}", NormalText));
 
-            using (FileStream file = new FileStream(fileName, FileMode.Create, FileAccess.Write))
-            {
-                MemStream.CopyTo(file);
-                Process.Start(fileName);
-            }             
+            table.AddCell(CellHandler("Gastos Totales", NormalText));
+            table.AddCell(CellHandler($"${Calculator.FormatValue(anualBalance.TotalSpent)}",NormalText));
+
+            table.AddCell(CellHandler("Promedio de Ingresos por mes", NormalText));
+            table.AddCell(CellHandler($"${Calculator.FormatValue(Calculator.AverageIncomesPerMonth(anualBalance))}", NormalText));
+
+            table.AddCell(CellHandler("Promedio de Gastos por mes", NormalText));
+            table.AddCell(CellHandler($"${Calculator.FormatValue(Calculator.AverageSpendingsPerMonth(anualBalance))}", NormalText));
+
+            table.AddCell(CellHandler("Balance Final", NormalText));
+            table.AddCell(CellHandler($"${Calculator.FormatValue(anualBalance.Result)}", NormalText));
+
+            Document.Add(table);
         }
-        
+        #endregion
     }
 }

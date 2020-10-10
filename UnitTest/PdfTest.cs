@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using ClassLibrary;
 using ClassLibrary.Helpers;
+using iText.IO.Font.Constants;
+using iText.Kernel.Font;
+using iText.Layout;
+using iText.Layout.Element;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest
@@ -23,5 +27,21 @@ namespace UnitTest
 
             PdfHelper.CreateAnualPdf(FileName,anualBalance);
         }
+
+        [TestMethod]
+        public void CellHandlerTest()
+        {
+            //Arrange
+            var text = "cell handler unit test";
+            PdfFont HelveticaRegular = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
+            Style NormalText = new Style().SetFontSize(10).SetFont(HelveticaRegular);
+
+            //Act
+            var result = PdfHelper.CellHandler(text,NormalText,2,2);
+
+            //Assert
+            Assert.IsNotNull(result);
+            Assert.IsInstanceOfType(result, typeof(Cell));
+    }
     }
 }
