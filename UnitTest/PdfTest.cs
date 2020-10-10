@@ -21,7 +21,7 @@ namespace UnitTest
             anualBalance.Balances.Add(July);
             anualBalance.Result = 45000;
 
-            PdfHelper.CreatePdf(FileName,anualBalance);
+            PdfHelper.CreateAnualPdf(FileName,anualBalance);
         }
     }
 }

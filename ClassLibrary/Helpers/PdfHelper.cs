@@ -5,18 +5,10 @@ using iText.Layout.Element;
 using System.IO;
 using System.Diagnostics;
 using iText.Kernel.Font;
-using iText.Kernel.Pdf.Canvas.Parser.Listener;
-using System.Drawing;
-using iText.IO.Font;
 using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
-using iText.Layout.Borders;
-using System.Dynamic;
 using System.Collections.Generic;
-using System;
-using System.Drawing.Imaging;
-using System.Drawing;
-using iText.Kernel.Pdf.Colorspace;
+using iText.Layout.Properties;
 
 namespace ClassLibrary.Helpers
 {
@@ -57,6 +49,11 @@ namespace ClassLibrary.Helpers
                                     .SetFontColor(ColorConstants.RED)
                                     .SetFont(HelveticaRegular);
 
+        private static Style CellHeader = new Style()
+                                    .SetTextAlignment(TextAlignment.CENTER)
+                                    .SetFontSize(14)
+                                    .SetFont(HelveticaBold);
+
         #endregion
 
         static PdfHelper()
@@ -66,21 +63,52 @@ namespace ClassLibrary.Helpers
             Document = new Document(new PdfDocument(Writer),PageSize.A4);    
         }
 
-        private static void SetDocumentInfo(YearlyBalance yearBalance)
+        private static Cell CellHandler(string text, Style style, int cellRow = 1, int cellCol = 1)
         {
-            //Content
-            var formattedResult = String.Format("{0:0.00}", yearBalance.Result);
-            Document.Add(new Paragraph($"Balance Anual {yearBalance.Year}  ${formattedResult}").AddStyle(Header));
+            return new Cell(cellRow, cellCol).Add(new Paragraph(text).AddStyle(style));
+        }
 
-            CreateTablePerMonthBalance(yearBalance.Balances);
+        private static void SetDocumentInfo(YearlyBalance anualBalance)
+        {
+            //Content         
+            Document.Add(new Paragraph($"Balance Anual {anualBalance.Year}").AddStyle(Header));
+            Document.Add(new Paragraph(""));
+
+            Document.Add(new Paragraph($"Total ${Calculator.FormatValue(anualBalance.Result)}").AddStyle(Header));
+
+            CreateTablePerMonthBalance(anualBalance.Balances);
+
+            Document.Add(new Paragraph(""));
+            Document.Add(new Paragraph(""));
+
+            CreateAnualDetailsTable(anualBalance);
 
             Document.Close();
         }
 
-
-        private static void CreateTablePerMonthBalance(List<Balance> balances)
+        private static void CreateAnualDetailsTable(YearlyBalance anualBalance)
         {
+            Table table = new Table(2).UseAllAvailableWidth();
+            //table.AddCell(new Cell(2,2).Add(new Paragraph("Detalle Anual").AddStyle(CellHeader)));
+            table.AddCell(CellHandler("Detalle Anual",CellHeader,2,2));
+            table.AddCell(CellHandler("Ingresos Totales",NormalText));
+            table.AddCell(new Cell().Add(new Paragraph($"${Calculator.FormatValue(anualBalance.TotalSaved)}").AddStyle(NormalText)));
+            table.AddCell(new Cell().Add(new Paragraph("Gastos Totales").AddStyle(NormalText)));
+            table.AddCell(new Cell().Add(new Paragraph($"${Calculator.FormatValue(anualBalance.TotalSpent)}").AddStyle(NormalText)));
+            table.AddCell(new Cell().Add(new Paragraph("Promedio de Ingreso por mes").AddStyle(NormalText)));
+            table.AddCell(new Cell().Add(new Paragraph($"${Calculator.FormatValue(Calculator.AverageIncomesPerMonth(anualBalance))}").AddStyle(NormalText)));
+            table.AddCell(new Cell().Add(new Paragraph("Promeio de Gastos por mes").AddStyle(NormalText)));
+            table.AddCell(new Cell().Add(new Paragraph($"${Calculator.FormatValue(Calculator.AverageSpendingsPerMonth(anualBalance))}").AddStyle(NormalText)));
+            table.AddCell(new Cell().Add(new Paragraph("Balance Final").AddStyle(NormalText)));
+            table.AddCell(new Cell().Add(new Paragraph($"${Calculator.FormatValue(anualBalance.Result)}").AddStyle(NormalText)));
+
+            Document.Add(table);
+        }
+     
+        private static void CreateTablePerMonthBalance(List<Balance> balances)
+        {                     
             Table table = new Table(4).UseAllAvailableWidth();
+            table.AddCell(new Cell(4,4).Add(new Paragraph("Resumen Anual por mes").AddStyle(CellHeader)));
             table.AddCell(new Cell().Add(new Paragraph("Mes").AddStyle(SubTitle)));
             table.AddCell(new Cell().Add(new Paragraph("Ingreso").AddStyle(SubTitle)));
             table.AddCell(new Cell().Add(new Paragraph("Egreso").AddStyle(SubTitle)));
@@ -99,7 +127,7 @@ namespace ClassLibrary.Helpers
             Document.Add(table);
         }
 
-        public static void CreatePdf(string fileName, YearlyBalance yearBalance)
+        public static void CreateAnualPdf(string fileName, YearlyBalance yearBalance)
         {
             SetDocumentInfo(yearBalance);
 

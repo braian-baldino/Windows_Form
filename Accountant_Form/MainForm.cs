@@ -67,7 +67,7 @@ namespace Accountant_Form
         private void btnYearsDetails_Click(object sender, EventArgs e)
         {
             var fileName = $"Balance_Anual_{AnualBalance.Year}.pdf";
-            PdfHelper.CreatePdf(fileName,AnualBalance);
+            PdfHelper.CreateAnualPdf(fileName,AnualBalance);
         }
 
         private void btnMonthDetails_Click(object sender, EventArgs e)
