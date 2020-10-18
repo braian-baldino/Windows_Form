@@ -9,6 +9,8 @@ using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
 using System.Collections.Generic;
 using iText.Layout.Properties;
+using System;
+using C = ClassLibrary.Helpers.Calculator; 
 
 namespace ClassLibrary.Helpers
 {
@@ -69,7 +71,7 @@ namespace ClassLibrary.Helpers
 
         public static void CreateAnualPdf(string fileName, YearlyBalance yearBalance)
         {
-            SetDocumentInfo(yearBalance);
+            SetAnualDocumentInfo(yearBalance);
 
             byte[] bytesStream = MemStream.ToArray();
             MemStream = new MemoryStream();
@@ -89,25 +91,40 @@ namespace ClassLibrary.Helpers
             return new Cell(cellRow, cellCol).Add(new Paragraph(text).AddStyle(style));
         }
 
-        private static void SetDocumentInfo(YearlyBalance anualBalance)
+        private static void GenerateSpaces(int lines)
+        {
+            for (int i = 0; i < lines; i++)
+            {
+                Document.Add(new Paragraph(""));
+            }
+        }
+
+        private static void SetAnualDocumentInfo(YearlyBalance anualBalance)
         {
             //Content         
             Document.Add(new Paragraph($"Balance Anual {anualBalance.Year}").AddStyle(Header));
-            Document.Add(new Paragraph(""));
+            GenerateSpaces(1);
 
-            Document.Add(new Paragraph($"Total ${Calculator.FormatValue(anualBalance.Result)}").AddStyle(Header));
+            Document.Add(new Paragraph($"Total ${C.FormatValue(anualBalance.Result)}").AddStyle(Header));
 
-            CreateTablePerMonthBalance(anualBalance.Balances);
+            CreateAnualTablePerMonthBalance(anualBalance.Balances);
 
-            Document.Add(new Paragraph(""));
-            Document.Add(new Paragraph(""));
+            GenerateSpaces(2);
 
             CreateAnualDetailsTable(anualBalance);
+
+            GenerateSpaces(2);
+
+            AnualIncomeCategoryTable(anualBalance);
+
+            GenerateSpaces(2);
+
+            AnualSpendingCategoryTable(anualBalance);
 
             Document.Close();
         }
      
-        private static void CreateTablePerMonthBalance(List<Balance> balances)
+        private static void CreateAnualTablePerMonthBalance(List<Balance> balances)
         {                     
             Table table = new Table(4).UseAllAvailableWidth();
             table.AddCell(CellHandler("Resumen Anual Por Mes", CellHeader, 4, 4));
@@ -129,25 +146,61 @@ namespace ClassLibrary.Helpers
             Document.Add(table);
         }
 
+        private static void AnualIncomeCategoryTable(YearlyBalance anualBalance)
+        {
+            var incomeCategories = Enum.GetNames(typeof(EIncome));
+            Array.Sort(incomeCategories, StringComparer.InvariantCulture);
+
+            Table incomeCategoriesTable = new Table(2).UseAllAvailableWidth();
+            incomeCategoriesTable.AddCell(CellHandler("Detalle Ingresos por categoria", CellHeader, 2, 2));
+
+            foreach (var categoryName in incomeCategories)
+            {
+                var category = (EIncome)Enum.Parse(typeof(EIncome), categoryName);      
+                incomeCategoriesTable.AddCell(CellHandler(categoryName, NormalText));
+                incomeCategoriesTable.AddCell(CellHandler($"${C.FormatValue(C.CalculateTotalForAnualBySpecifiedCategory(anualBalance, category))}", NormalText));
+            }
+
+            Document.Add(incomeCategoriesTable);
+        }
+
+        private static void AnualSpendingCategoryTable(YearlyBalance anualBalance)
+        {
+            var spendingCategories = Enum.GetNames(typeof(ESpending));
+            Array.Sort(spendingCategories, StringComparer.InvariantCulture);
+
+            Table spendingCategoriesTable = new Table(2).UseAllAvailableWidth();
+            spendingCategoriesTable.AddCell(CellHandler("Detalle Egresos por categoria", CellHeader, 2, 2));
+
+            foreach (var categoryName in spendingCategories)
+            {
+                var category = (ESpending)Enum.Parse(typeof(ESpending), categoryName);
+                spendingCategoriesTable.AddCell(CellHandler(categoryName, NormalText));
+                spendingCategoriesTable.AddCell(CellHandler($"${C.FormatValue(C.CalculateTotalForAnualBySpecifiedCategory(anualBalance, category))}", NormalText));
+            }
+
+            Document.Add(spendingCategoriesTable);
+        }
+
         private static void CreateAnualDetailsTable(YearlyBalance anualBalance)
         {
             Table table = new Table(2).UseAllAvailableWidth();
             table.AddCell(CellHandler("Detalle Anual", CellHeader, 2, 2));
 
             table.AddCell(CellHandler("Ingresos Totales", NormalText));
-            table.AddCell(CellHandler($"${Calculator.FormatValue(anualBalance.TotalSaved)}", NormalText));
+            table.AddCell(CellHandler($"${C.FormatValue(anualBalance.TotalSaved)}", NormalText));
 
             table.AddCell(CellHandler("Gastos Totales", NormalText));
-            table.AddCell(CellHandler($"${Calculator.FormatValue(anualBalance.TotalSpent)}",NormalText));
+            table.AddCell(CellHandler($"${C.FormatValue(anualBalance.TotalSpent)}",NormalText));
 
             table.AddCell(CellHandler("Promedio de Ingresos por mes", NormalText));
-            table.AddCell(CellHandler($"${Calculator.FormatValue(Calculator.AverageIncomesPerMonth(anualBalance))}", NormalText));
+            table.AddCell(CellHandler($"${C.FormatValue(C.AverageIncomesPerMonth(anualBalance))}", NormalText));
 
             table.AddCell(CellHandler("Promedio de Gastos por mes", NormalText));
-            table.AddCell(CellHandler($"${Calculator.FormatValue(Calculator.AverageSpendingsPerMonth(anualBalance))}", NormalText));
+            table.AddCell(CellHandler($"${C.FormatValue(C.AverageSpendingsPerMonth(anualBalance))}", NormalText));
 
             table.AddCell(CellHandler("Balance Final", NormalText));
-            table.AddCell(CellHandler($"${Calculator.FormatValue(anualBalance.Result)}", NormalText));
+            table.AddCell(CellHandler($"${C.FormatValue(anualBalance.Result)}", NormalText));
 
             Document.Add(table);
         }
