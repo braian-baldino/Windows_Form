@@ -71,18 +71,26 @@ namespace ClassLibrary.Helpers
 
         public static void CreateAnualPdf(string fileName, YearlyBalance yearBalance)
         {
-            SetAnualDocumentInfo(yearBalance);
-
-            byte[] bytesStream = MemStream.ToArray();
-            MemStream = new MemoryStream();
-            MemStream.Write(bytesStream, 0, bytesStream.Length);
-            MemStream.Position = 0;
-
-            using (FileStream file = new FileStream(fileName, FileMode.Create, FileAccess.Write))
+            try
             {
-                MemStream.CopyTo(file);
-                Process.Start(fileName);
+                SetAnualDocumentInfo(yearBalance);
+
+                byte[] bytesStream = MemStream.ToArray();
+                MemStream = new MemoryStream();
+                MemStream.Write(bytesStream, 0, bytesStream.Length);
+                MemStream.Position = 0;
+
+                using (FileStream file = new FileStream(fileName, FileMode.Create, FileAccess.Write))
+                {
+                    MemStream.CopyTo(file);
+                    Process.Start(fileName);
+                }
             }
+            catch (Exception)
+            {
+                Document.Close();
+            }
+            
         }
 
         #region Private Methods
